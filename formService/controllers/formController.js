@@ -274,7 +274,7 @@ exports.downloadFile = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.updateUserData = catchAsync(async (user) => {
+exports.updateUserData = catchAsync(async (topic, user) => {
     await Form.updateMany(
         { user: user._id },
         {

@@ -7,14 +7,14 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: 'formServiceGroup' });
 
-const subscribe = async (topic, callback) => {
+const subscribe = async (topics, callback) => {
     await consumer.connect()
 
-    await consumer.subscribe({ topic, fromBeginning: false });
+    await consumer.subscribe({ topics, fromBeginning: false });
 
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
-            callback(JSON.parse(message.value.toString()));
+            callback(topic, JSON.parse(message.value.toString()));
         },
     })
 };

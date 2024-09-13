@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const sendEmail = require('./../utils/email');
+const dispatchEvent = require('./../utils/eventDispatcher');
 
 const formSchema = new mongoose.Schema({
     user: {
@@ -225,10 +225,12 @@ formSchema.post('findOneAndUpdate', async function(form, next) {
             message += `\n\nΣχόλιο:\n${comment}`;
         }
 
-        await sendEmail({
-            email: form.email,
-            subject: `Η δήλωση πολυθεσίας που υποβάλατε έχει ενημερωθεί`,
-            message
+        dispatchEvent('formStatusChanged', {
+            value: JSON.stringify({
+                email: form.email,
+                subject: `Η δήλωση πολυθεσίας που υποβάλατε έχει ενημερωθεί`,
+                message
+            })
         });
     }
 

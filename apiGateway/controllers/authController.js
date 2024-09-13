@@ -3,10 +3,10 @@ const jwt = require('jsonwebtoken');
 const AppError = require('../utils/appError');
 const bcrypt = require('bcryptjs');
 const { promisify } = require('util');
-const sendEmail = require('./../utils/email');
 const dotenv = require('dotenv');
 const axios = require('./../utils/axios');
 const crypto = require('crypto');
+const dispatchEvent = require('./../utils/eventDispatcher');
 
 dotenv.config({ path: './../config.env' });
 
@@ -162,25 +162,18 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
         \n${resetURL}
         \nΑν δεν ξεχάσατε τον κωδικό σας, παρακαλούμε αγνοήστε αυτό το email!`;
 
-    try {
-        await sendEmail({
+    dispatchEvent('forgorPassword', {
+        value: JSON.stringify({
             email: user.email,
             subject: 'Your password reset token (valid for 10 min)',
             message
-        });
+        })
+    });
 
-        res.status(200).json({
-            status: 'success',
-            message: 'Token sent to email!'
-        });
-    } catch (err) {
-        await axios.patch(`${process.env.USER_SERVICE_URL}/${user._id}`, {
-            passwordResetToken: undefined,
-            passwordResetExpires: undefined
-        });
-
-        return next(new AppError('There was an error sending the email. Try again later!'), 500);
-    }
+    res.status(200).json({
+        status: 'success',
+        message: 'Token sent to email!'
+    });
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {

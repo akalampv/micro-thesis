@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const subscribe = require('./utils/eventSubscriber');
 const formController = require('./controllers/formController');
 
-subscribe('userUpdated', formController.updateUserData);
+subscribe(['userUpdated'], formController.updateUserData);
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./middleware/errorMiddleware');

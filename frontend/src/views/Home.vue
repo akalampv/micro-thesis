@@ -313,7 +313,7 @@
         try {
             const queryParams = new URLSearchParams(query)
 
-            const response = await axios.get(`https://localhost:3000/api/v1/forms?${queryParams}`, {
+            const response = await axios.get(`https://localhost:3000/forms?${queryParams}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
                 }

@@ -92,7 +92,7 @@
     const submit = async event => {
         try {
             const response = await axios.patch(
-                'https://localhost:3000/api/v1/users/updateMyPassword',
+                'https://localhost:3000/users/updateMyPassword',
                 {
                     passwordCurrent: passwordCurrent.value,
                     password: password.value,

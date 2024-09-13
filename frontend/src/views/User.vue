@@ -314,19 +314,25 @@
     const user = ref(JSON.parse(localStorage.getItem('user')))
 
     onMounted(async () => {
-        const response = await axios.get('https://localhost:3000/api/v1/users/services')
+        const response = await axios.get('https://localhost:3000/users?role=publicService', {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
+            }
+        })
 
-        services.value = response.data.data.services
+        services.value = response.data.data.users
     })
 
     const submit = async () => {
         success.value = null
         errors.value = []
 
+        const {password, passwordConfirm, ...userData} = user.value
+
         try {
             const response = await axios.patch(
-                'https://localhost:3000/api/v1/users/updateMe',
-                user.value,
+                'https://localhost:3000/updateMe',
+                userData,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`

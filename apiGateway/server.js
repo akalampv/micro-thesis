@@ -1,31 +1,32 @@
-const express = require('express');
-const httpProxy = require('http-proxy');
 const dotenv = require('dotenv');
+const https = require('https');
+const fs = require('fs');
 
-dotenv.config();
-
-const app = express();
-const apiProxy = httpProxy.createProxyServer();
-
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
-const FORM_SERVICE_URL = process.env.FORM_SERVICE_URL;
-
-// User Service Proxy
-app.use('/api/users', (req, res) => {
-    apiProxy.web(req, res, { target: USER_SERVICE_URL });
+process.on('uncaughtException', err => {
+    console.log('UNCAUGHT EXCEPTION! Shutting down...');
+    console.log(err.name, err.message);
+    process.exit(1);
 });
 
-// Form Service Proxy
-app.use('/api/forms', (req, res) => {
-    apiProxy.web(req, res, { target: FORM_SERVICE_URL });
+dotenv.config({ path: './config.env' });
+const app = require('./app');
+
+const port = process.env.PORT || 3000;
+
+const options = {
+    key: fs.readFileSync(`/Users/thanasis/localhost-key.pem`),
+    cert: fs.readFileSync('/Users/thanasis/localhost.pem'),
+};
+
+https.createServer(options, app).listen(port, function () {
+    console.log(`API Gateway running on port ${port}...`);
 });
 
-// Error handling
-apiProxy.on('error', (err, req, res) => {
-    res.status(500).json({ error: 'Internal Server Error' });
-});
+process.on('unhandledRejection', err => {
+    console.log('UNHANDLED REJECTION! Shutting down...');
+    console.log(err.name, err.message);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`API Gateway running on port ${PORT}`);
+    server.close(() => {
+        process.exit(1);
+    });
 });

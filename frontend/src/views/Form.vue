@@ -25,7 +25,7 @@
                         :to="{ name: 'User' }"
                         class="text-indigo-600 hover:text-indigo-500"
                     >
-                        {{ `${user.firstName} ${user.lastName}` }}
+                        {{ userName }}
                     </router-link>
                 </div>
 
@@ -561,7 +561,7 @@
     })
 
     const form = ref(null)
-    const user = ref({})
+    const userName = ref(null)
     const currentUser = JSON.parse(localStorage.getItem('user'))
     const errors = ref([])
     const success = ref(null)
@@ -638,7 +638,7 @@
         makeRequest(async () => {
             return await axios.request({
                 method: 'post',
-                url: 'https://localhost:3000/api/v1/forms',
+                url: 'https://localhost:3000/forms',
                 data: revision,
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
@@ -653,7 +653,7 @@
         makeRequest(async () => {
             return await axios.request({
                 method: 'patch',
-                url: `https://localhost:3000/api/v1/forms/${props.id}`,
+                url: `https://localhost:3000/forms/${props.id}`,
                 data: {
                     status,
                     comment: form.value.comment
@@ -677,7 +677,7 @@
         makeRequest(async () => {
             return await axios.request({
                 method: props.id ? 'patch' : 'post',
-                url: ['https://localhost:3000/api/v1/forms', props.id].join('/'),
+                url: ['https://localhost:3000/forms', props.id].join('/'),
                 data: form.value,
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
@@ -750,7 +750,7 @@
 
             const response = await axios.request({
                 method: 'post',
-                url: 'https://localhost:3000/api/v1/forms/upload',
+                url: 'https://localhost:3000/forms/upload',
                 data: formData,
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`,
@@ -772,7 +772,7 @@
     const downloadFile = async file => {
         const response = await axios.request({
             method: 'post',
-            url: 'https://localhost:3000/api/v1/forms/download',
+            url: 'https://localhost:3000/forms/download',
             responseType: 'arraybuffer',
             data: file,
             headers: {
@@ -797,21 +797,22 @@
     onMounted(async () => {
         try {
             if (props.id) {
-                const response = await axios.get(`https://localhost:3000/api/v1/forms/${props.id}`, {
+                const response = await axios.get(`https://localhost:3000/forms/${props.id}`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
                     }
                 });
 
                 form.value = response.data.data.form
-                user.value = form.value.user
+                userName.value = form.value.userName
             } else {
-                user.value = JSON.parse(localStorage.getItem('user'))
+                userName.value = `${currentUser.firstName} ${currentUser.lastName}`
                 form.value = {
-                    user: user.value._id,
-                    userName: `${user.value.firstName} ${user.value.lastName}`,
-                    service: user.value.service,
-                    serviceName: user.value.service.name,
+                    user: currentUser._id,
+                    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+                    email: currentUser.email,
+                    service: currentUser.service,
+                    serviceName: currentUser.service.name,
                     status: 'pending',
                     year: (new Date()).getFullYear(),
                     semester: (new Date).getMonth() < 6 ? 1 : 2,
@@ -834,7 +835,7 @@
 
             loading.value = false
         } catch (err) {
-            if (err.response.status === 401) {
+            if (err.response?.status === 401) {
                 router.push({ name: 'Login' })
             }
             console.log(err, err.response)

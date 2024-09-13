@@ -393,14 +393,14 @@
     let errors = ref([])
 
     onMounted(async () => {
-        const response = await axios.get('https://localhost:3000/api/v1/users/services')
+        const response = await axios.get('https://localhost:3000/users?role=publicService')
 
-        services.value = response.data.data.services
+        services.value = response.data.data.users
     })
 
     const submit = async () => {
         try {
-            const response = await axios.post('https://localhost:3000/api/v1/users/signup', user.value)
+            const response = await axios.post('https://localhost:3000/signup', user.value)
 
             localStorage.setItem('user', JSON.stringify(response.data.data.user))
             localStorage.setItem('token', response.data.token)

@@ -76,7 +76,7 @@
     const submit = async event => {
         try {
             const response = await axios.patch(
-                `https://localhost:3000/api/v1/users/resetPassword/${route.params.token}`,
+                `https://localhost:3000/resetPassword/${route.params.token}`,
                 {
                     password: password.value,
                     passwordConfirm: passwordConfirm.value

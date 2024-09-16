@@ -14,7 +14,6 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 
     const users = await User.find(query);
 
-    // SEND RESPONSE
     res.status(200).json({
         status: 'success',
         results: users.length,
@@ -148,20 +147,16 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
     const userId = req.user?.id || req.headers['user_id'];
-    // 1) Get user from collection
     const user = await User.findById(userId).select('+password');
 
-    // 2) Check if POSTed current password is correct
     if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
         return next(new AppError('Your current password is wrong.', 401));
     }
 
-    // 3) If so, update password
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
 
     await user.save();
-    // User.findByIdAndUpdate will NOT work as intended!
 
     res.status(201).json({
         status: 'success',

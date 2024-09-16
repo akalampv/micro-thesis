@@ -11,30 +11,23 @@ const gatewayRoutes = require('./routes/gatewayRoutes');
 
 const app = express();
 
-// 1) GLOBAL MIDDLEWARES
-// Implement CORS Policy
 app.use(cors({
     origin: 'https://localhost:5173',
 }));
 
-// Set security HTTP headers
 app.use(helmet());
 
-// Limit requests from same API
 const limiter = rateLimit({
     max: 100,
     windowMs: 60 * 60 * 1000,
     message: 'Too many requests from this IP, please try again in an hour!'
 });
-// app.use('/api', limiter);
+app.use('/api', limiter);
 
-// Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 
-// Data sanitization against XSS
 app.use(xss());
 
-// 3) ROUTES
 app.use('/', gatewayRoutes);
 
 app.all('*', (req, res, next) => {

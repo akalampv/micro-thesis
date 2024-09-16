@@ -393,7 +393,11 @@
     let errors = ref([])
 
     onMounted(async () => {
-        const response = await axios.get('https://localhost:3000/users?role=publicService')
+        const response = await axios.get('https://localhost:3000/users?role=publicService', {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
+            }
+        })
 
         services.value = response.data.data.users
     })

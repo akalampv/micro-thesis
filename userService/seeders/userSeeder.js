@@ -6,12 +6,11 @@ const path = require('path');
 
 dotenv.config({ path: path.normalize(`${__dirname}/../config.env`) });
 const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
-const password = 'AkV0347#Thesis';
+const password = 'a1234567890!';
 
 const seedUsers = async () => {
     await mongoose.connect(DB)
 
-    // Seed audit service.
     await User.create({
         role: 'auditService',
         name: 'Ελεγκτική Αρχή',
@@ -21,7 +20,6 @@ const seedUsers = async () => {
         passwordConfirm: password
     });
 
-    // Seed public services.
     let publicService;
     for (let i = 0; i < 5; i++) {
         publicService = await User.create({
@@ -33,7 +31,6 @@ const seedUsers = async () => {
             passwordConfirm: password
         });
 
-        // Seed employees.
         for (let i = 0; i < 5; i++) {
             await User.create({
                 role: 'employee',

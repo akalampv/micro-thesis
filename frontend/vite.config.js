@@ -3,9 +3,6 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-import fs from 'fs'
-import path from 'path'
-
 export default defineConfig({
   plugins: [
     vue(),
@@ -16,9 +13,6 @@ export default defineConfig({
     }
   },
   server: {
-    https: {
-      key: fs.readFileSync(path.resolve('/Users/thanasis/localhost-key.pem')),
-      cert: fs.readFileSync(path.resolve('/Users/thanasis/localhost.pem'))
-    }
+    host: true
   }
 })

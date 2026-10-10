@@ -1,6 +1,4 @@
 const dotenv = require('dotenv');
-const https = require('https');
-const fs = require('fs');
 
 process.on('uncaughtException', err => {
     console.log('UNCAUGHT EXCEPTION! Shutting down...');
@@ -13,12 +11,7 @@ const app = require('./app');
 
 const port = process.env.PORT || 3000;
 
-const options = {
-    key: fs.readFileSync(`/Users/thanasis/localhost-key.pem`),
-    cert: fs.readFileSync('/Users/thanasis/localhost.pem'),
-};
-
-https.createServer(options, app).listen(port, function () {
+const server = app.listen(port, () => {
     console.log(`API Gateway running on port ${port}...`);
 });
 

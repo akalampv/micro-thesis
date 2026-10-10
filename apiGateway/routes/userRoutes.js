@@ -1,6 +1,7 @@
 const express = require('express');
 const authController = require('../controllers/authController');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const limiter = require('../utils/rateLimiter');
 
 const router = express.Router();
 
@@ -10,13 +11,13 @@ const proxy = createProxyMiddleware({
     secure: false
 });
 
-router.patch('/resetPassword/:token', proxy);
-router.patch('/updateMyPassword', proxy);
+router.patch('/resetPassword/:token', limiter, proxy);
+router.patch('/updateMyPassword', authController.protect, proxy);
 
 router
     .route('/')
     .get(authController.protect, proxy)
-    .post(proxy);
+    .post(limiter, proxy);
 
 router
     .route('/:id')

@@ -1,5 +1,4 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const cors = require('cors')
 const mongoSanitize = require('express-mongo-sanitize');
@@ -12,17 +11,10 @@ const gatewayRoutes = require('./routes/gatewayRoutes');
 const app = express();
 
 app.use(cors({
-    origin: 'https://localhost:5173',
+    origin: 'http://localhost:5173',
 }));
 
 app.use(helmet());
-
-const limiter = rateLimit({
-    max: 100,
-    windowMs: 60 * 60 * 1000,
-    message: 'Too many requests from this IP, please try again in an hour!'
-});
-app.use('/api', limiter);
 
 app.use(mongoSanitize());
 

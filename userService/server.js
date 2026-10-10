@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const https = require('https');
-const fs = require('fs');
 
 process.on('uncaughtException', err => {
     console.log('UNCAUGHT EXCEPTION! Shutting down...');
@@ -20,12 +18,7 @@ mongoose
 
 const port = process.env.PORT || 3001;
 
-const options = {
-    key: fs.readFileSync(`/Users/thanasis/localhost-key.pem`),
-    cert: fs.readFileSync('/Users/thanasis/localhost.pem'),
-};
-
-https.createServer(options, app).listen(port, function () {
+const server = app.listen(port, () => {
     console.log(`User service running on port ${port}...`);
 });
 

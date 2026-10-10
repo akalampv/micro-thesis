@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const https = require('https');
-const fs = require('fs');
 const cron = require('node-cron');
 const purgeOrphanFiles = require('./commands/purgeOrphanFiles.js');
 
@@ -26,12 +24,7 @@ mongoose
 
 const port = process.env.PORT || 3002;
 
-const options = {
-    key: fs.readFileSync(`/Users/thanasis/localhost-key.pem`),
-    cert: fs.readFileSync('/Users/thanasis/localhost.pem'),
-};
-
-https.createServer(options, app).listen(port, function () {
+const server = app.listen(port, () => {
     console.log(`Form service running on port ${port}...`);
 });
 

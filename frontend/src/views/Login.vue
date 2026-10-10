@@ -102,7 +102,7 @@
         error.value = ''
 
         try {
-            await axios.post('https://localhost:3000/forgotPassword', {
+            await axios.post('http://localhost:3000/forgotPassword', {
                 email: email.value
             })
 
@@ -121,7 +121,7 @@
         error.value = ''
 
         try {
-            const response = await axios.post('https://localhost:3000/login', {
+            const response = await axios.post('http://localhost:3000/login', {
                 email: email.value,
                 password: password.value
             })

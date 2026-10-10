@@ -638,7 +638,7 @@
         makeRequest(async () => {
             return await axios.request({
                 method: 'post',
-                url: 'https://localhost:3000/forms',
+                url: 'http://localhost:3000/forms',
                 data: revision,
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
@@ -653,7 +653,7 @@
         makeRequest(async () => {
             return await axios.request({
                 method: 'patch',
-                url: `https://localhost:3000/forms/${props.id}`,
+                url: `http://localhost:3000/forms/${props.id}`,
                 data: {
                     status,
                     comment: form.value.comment
@@ -677,7 +677,7 @@
         makeRequest(async () => {
             return await axios.request({
                 method: props.id ? 'patch' : 'post',
-                url: ['https://localhost:3000/forms', props.id].join('/'),
+                url: ['http://localhost:3000/forms', props.id].join('/'),
                 data: form.value,
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
@@ -750,7 +750,7 @@
 
             const response = await axios.request({
                 method: 'post',
-                url: 'https://localhost:3000/forms/upload',
+                url: 'http://localhost:3000/forms/upload',
                 data: formData,
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`,
@@ -772,7 +772,7 @@
     const downloadFile = async file => {
         const response = await axios.request({
             method: 'post',
-            url: 'https://localhost:3000/forms/download',
+            url: 'http://localhost:3000/forms/download',
             responseType: 'arraybuffer',
             data: file,
             headers: {
@@ -797,7 +797,7 @@
     onMounted(async () => {
         try {
             if (props.id) {
-                const response = await axios.get(`https://localhost:3000/forms/${props.id}`, {
+                const response = await axios.get(`http://localhost:3000/forms/${props.id}`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`
                     }

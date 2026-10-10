@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "watch": "HTTPS=true SSL_CRT_FILE=/Users/thanasis/localhost.pem SSL_KEY_FILE=/Users/thanasis/localhost-key.pem vite",
+    "watch": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },

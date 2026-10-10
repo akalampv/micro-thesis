@@ -1,0 +1,138 @@
+x-node: &node
+  image: node:22-slim
+  working_dir: /app
+  command: sh -c "npm install && npm run watch"
+  restart: unless-stopped
+
+services:
+  api-gateway:
+    <<: *node
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      USER_SERVICE_URL: http://user-service:3001/api/v1
+      FORM_SERVICE_URL: http://form-service:3002/api/v1
+    volumes:
+      - ./apiGateway:/app
+      - /app/node_modules
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      user-service:
+        condition: service_started
+      form-service:
+        condition: service_started
+
+  user-service:
+    <<: *node
+    environment:
+      PORT: 3001
+      DATABASE: mongodb://mongo:27017/userService
+    volumes:
+      - ./userService:/app
+      - /app/node_modules
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
+
+  form-service:
+    <<: *node
+    environment:
+      PORT: 3002
+      DATABASE: mongodb://mongo:27017/formService
+      USER_SERVICE_URL: http://user-service:3001/api/v1
+    volumes:
+      - ./formService:/app
+      - /app/node_modules
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
+
+  notification-service:
+    <<: *node
+    environment:
+      EMAIL_HOST: mailpit
+      EMAIL_PORT: 1025
+    volumes:
+      - ./notificationService:/app
+      - /app/node_modules
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+
+  frontend:
+    <<: *node
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  kafka:
+    image: apache/kafka:3.9.0
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+
+  kafka-init:
+    image: apache/kafka:3.9.0
+    entrypoint:
+      - sh
+      - -c
+      - |
+        for topic in userUpdated formStatusChanged forgorPassword; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic $$topic
+        done
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  kafka-data:

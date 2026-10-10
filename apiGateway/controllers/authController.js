@@ -31,6 +31,9 @@ const createPasswordResetToken = async () => {
     return crypto.randomBytes(32).toString('hex');
 };
 
+// Let the user service's 4xx responses through, so a missing user is handled here instead of thrown by axios
+const allowClientErrors = { validateStatus: status => status < 500 };
+
 const signToken = id => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN
@@ -74,7 +77,7 @@ exports.login = catchAsync(async (req, res, next) => {
         return next(new AppError('Please provide email and password!', 400));
     }
 
-    const response = await axios.get(`${process.env.USER_SERVICE_URL}/email/${email}`);
+    const response = await axios.get(`${process.env.USER_SERVICE_URL}/email/${email}`, allowClientErrors);
     const user = response.data.data?.user;
 
     if (!user || !(await correctPassword(password, user.password))) {
@@ -97,7 +100,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    const response = await axios.get(`${process.env.USER_SERVICE_URL}/${decoded.id}`);
+    const response = await axios.get(`${process.env.USER_SERVICE_URL}/${decoded.id}`, allowClientErrors);
     const currentUser = response.data.data?.user;
 
     if (!currentUser) {
@@ -128,7 +131,7 @@ exports.restrictTo = (...roles) => {
 };
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
-    const response = await axios.get(`${process.env.USER_SERVICE_URL}/email/${req.body.email}`);
+    const response = await axios.get(`${process.env.USER_SERVICE_URL}/email/${req.body.email}`, allowClientErrors);
     const user = response.data.data?.user;
 
     if (!user) {
@@ -170,7 +173,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 exports.resetPassword = catchAsync(async (req, res, next) => {
     const response = await axios.patch(
         `${process.env.USER_SERVICE_URL}/resetPassword/${req.params.token}`,
-        req.body
+        req.body,
+        allowClientErrors
     );
 
     const user = response.data.data?.user;
@@ -183,12 +187,17 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
-    const response = await axios.post(
+    const response = await axios.patch(
         `${process.env.USER_SERVICE_URL}/updateMyPassword`,
-        req.body
+        req.body,
+        { headers: { user_id: req.user._id }, validateStatus: () => true }
     );
 
     const user = response.data.data?.user;
+
+    if (!user) {
+        return res.status(response.status).json(response.data);
+    }
 
     createSendToken(user, 200, res);
 });

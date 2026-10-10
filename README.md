@@ -13,55 +13,95 @@ of an API gateway, several backend services, and a frontend.
 | `notificationService` | Sends notifications (e.g. email).                |
 | `frontend`            | Client application (Vite).                        |
 
-## Setup
+## Running the project
 
-Requires [Node.js](https://nodejs.org/) and a MongoDB database.
+The whole system runs in Docker: the four services, the frontend, MongoDB,
+Kafka and a local mail catcher. The only requirement is
+[Docker](https://www.docker.com/).
 
-Each service reads its configuration from a `config.env` file, which is **not**
-committed to the repository (it holds secrets). Every service ships a
-`config.env.example` listing the required variables — copy it and fill in your
-own values:
+### 1. Create the config files
+
+Each service reads its secrets from a `config.env` file, which is **not**
+committed to the repository. Every service ships a `config.env.example` listing
+the required variables — copy it and fill in your own values:
 
 ```bash
-# for each service that has one:
 cp apiGateway/config.env.example          apiGateway/config.env
 cp userService/config.env.example         userService/config.env
 cp formService/config.env.example         formService/config.env
 cp notificationService/config.env.example notificationService/config.env
 ```
 
-Then install dependencies and start each component:
+### 2. Start
 
 ```bash
-# in each service directory (apiGateway, userService, formService, notificationService)
-npm install
-npm start        # or: npm run watch   (auto-reload via nodemon)
-
-# frontend
-cd frontend
-npm install
-npm run watch    # dev server (or: npm run build)
+./scripts/start.sh
 ```
 
-Some services provide a seeder to populate the database:
+The script starts all containers and waits until the app is reachable. The
+first run takes longer, because images are downloaded and each service installs
+its dependencies.
+
+| What        | Address                     |
+| ----------- | --------------------------- |
+| Frontend    | http://localhost:5173       |
+| API gateway | http://localhost:3000       |
+| Mailbox     | http://localhost:8025       |
+| MongoDB     | `mongodb://localhost:27017` |
+
+### 3. Seed the database (first run only)
 
 ```bash
-npm run seed     # available in userService and formService
+docker compose exec user-service npm run seed
+docker compose exec form-service npm run seed
 ```
+
+Run them in this order: the form seeder reads the employees created by the user
+seeder. All seeded users have the password `a1234567890!`. Their emails are
+random, so look one up in the `userService` database (for example with
+[MongoDB Compass](https://www.mongodb.com/products/tools/compass)) to log in.
+
+### 4. Stop
+
+```bash
+./scripts/stop.sh
+```
+
+The database is kept between runs. To delete it and start from scratch, run
+`docker compose down -v` and seed again.
+
+### Good to know
+
+- **Live reload:** each service folder is mounted into its container, so code
+  changes are picked up automatically.
+- **Logs:** `docker compose logs -f <service>`, where `<service>` is one of
+  `api-gateway`, `user-service`, `form-service`, `notification-service` or
+  `frontend`.
+- **Crashed service:** a crashed service waits for a file change. Save a file
+  or run `docker compose restart <service>`.
+- **New npm package:** restart the service afterwards so it is installed inside
+  the container.
+- **Emails:** nothing is sent to real recipients. Every email is caught by
+  [Mailpit](https://mailpit.axllent.org/) and can be read in the mailbox. It is
+  emptied on every stop.
+- **Rate limit:** login, signup and password reset share a limit of 100
+  requests per hour. `docker compose restart api-gateway` resets it.
 
 ### Environment variables
 
-Fill these into each service's `config.env` (see the matching
-`config.env.example`):
+These are the values that have to be filled in:
 
-- **apiGateway** — `NODE_ENV`, `PORT`, `USER_SERVICE_URL`, `FORM_SERVICE_URL`,
-  `JWT_SECRET`, `JWT_EXPIRES_IN`, `JWT_COOKIE_EXPIRES_IN`
-- **userService** — `NODE_ENV`, `PORT`, `DATABASE`, `DATABASE_PASSWORD`
-- **formService** — `NODE_ENV`, `PORT`, `DATABASE`, `DATABASE_PASSWORD`,
-  `USER_SERVICE_URL`
-- **notificationService** — `NODE_ENV`, `PORT`, `DATABASE`, `DATABASE_PASSWORD`,
-  `USER_SERVICE_URL`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_HOST`,
-  `EMAIL_PORT`, `MAIL_FROM_ADDRESS`
+- **apiGateway** — `NODE_ENV` (`development` or `production`), `JWT_SECRET`,
+  `JWT_EXPIRES_IN`, `JWT_COOKIE_EXPIRES_IN`
+- **notificationService** — `MAIL_FROM_ADDRESS`, `EMAIL_USERNAME`,
+  `EMAIL_PASSWORD` (the local mail catcher accepts any username and password,
+  but they must not be empty)
+- **userService**, **formService** — none
+
+The remaining variables in the `config.env.example` files (`PORT`, `DATABASE`,
+`DATABASE_PASSWORD`, `*_SERVICE_URL`, `EMAIL_HOST`, `EMAIL_PORT`) can be left
+empty: `docker-compose.yml` sets the ones that are used and overrides
+`config.env`.
 
 ## License
 
